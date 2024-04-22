@@ -11,148 +11,150 @@ typedef struct Node
 /// pentru simplitate, folosim int uri pt a numi restaurantel/locatiile
 /// ex: 1 - restaurantul 1 si tot asa
 
-NODE;
+Node;
 
-typedef struct g
+typedef struct Graph
 {
-    int v;
-    int *vis;
-    struct Node **alst;
-} GPH;
+    int vertexCount;
+    int *visited;
+    struct Node **adjacencyList;
+} Graph;
 
-typedef struct s
+typedef struct Stack
 {
-    int t;
-    int scap;
-    int *arr;
-} STK;
+    int top;
+    int capacity;
+    int *array;
+} Stack;
 
-NODE *create_node(int v)
+Node *createNode(int vertex)
 {
-    NODE *nn = malloc(sizeof(NODE));
-    nn->data = v;
-    nn->next = NULL;
-    return nn;
+    Node *newNode = (Node *)malloc(sizeof(Node));
+    newNode->data = vertex;
+    newNode->next = NULL;
+    return newNode;
 }
 
-void add_edge(GPH *g, int src, int dest)
+void addEdge(Graph *graph, int source, int destination)
 {
-    NODE *nn = create_node(dest);
-    nn->next = g->alst[src];
-    g->alst[src] = nn;
-    nn = create_node(src);
-    nn->next = g->alst[dest];
-    g->alst[dest] = nn;
+    Node *newNode = createNode(destination);
+    newNode->next = graph->adjacencyList[source];
+    graph->adjacencyList[source] = newNode;
+    newNode = createNode(source);
+    newNode->next = graph->adjacencyList[destination];
+    graph->adjacencyList[destination] = newNode;
 }
 
-GPH *create_g(int v)
+Graph *createGraph(int vertexCount)
 {
     int i;
-    GPH *g = malloc(sizeof(GPH));
-    g->v = v;
-    g->alst = malloc(sizeof(NODE *));
-    g->vis = malloc(sizeof(int) * v);
+    Graph *graph = (Graph *)malloc(sizeof(Graph));
+    graph->vertexCount = vertexCount;
+    graph->adjacencyList = (Node **)malloc(sizeof(Node *));
+    graph->visited = (int *)malloc(sizeof(int) * vertexCount);
 
-    for (int i = 0; i < v; i++)
+    for (int i = 0; i < vertexCount; i++)
     {
-        g->alst[i] = NULL;
-        g->vis[i] = 0;
+        graph->adjacencyList[i] = NULL;
+        graph->visited[i] = 0;
     } 
-    return g;
+    return graph;
 }
 
-STK *create_s(int scap)
+Stack *createStack(int capacity)
 {
-    STK *s = malloc(sizeof(STK));
-    s->arr = malloc(scap * sizeof(int));
-    s->t = -1;
-    s->scap = scap;
+    Stack *stack = (Stack *)malloc(sizeof(Stack));
+    stack->array = (int*)malloc(capacity * sizeof(int));
+    stack->top = -1;
+    stack->capacity = capacity;
 
-    return s;
+    return stack;
 }
 
-void push(int pshd, STK *s)
+void push(int pushedElement, Stack *stack)
 {
-    s->t = s->t + 1;
-    s->arr[s->t] = pshd;
+    stack->top = stack->top + 1;
+    stack->array[stack->top] = pushedElement;
 }
 
-void DFS(GPH *g, STK *s, int v_nr)
+void DFS(Graph *graph, Stack *stack, int vertexNumber)
 {
-    NODE *adj_list = g->alst[v_nr];
-    NODE *aux = adj_list;
-    g->vis[v_nr] = 1;
-    printf("%d ", v_nr);
-    push(v_nr, s);
-    while (aux != NULL)
+    Node *adjacencyList = graph->adjacencyList[vertexNumber];
+    Node *temp = adjacencyList;
+    graph->visited[vertexNumber] = 1;
+    printf("%d ", vertexNumber);
+    push(vertexNumber, stack);
+    while (temp != NULL)
     {
-        int con_ver = aux->data;
-        if (g->vis[con_ver] == 0)
-            DFS(g, s, con_ver);
-        aux = aux->next;
+        int connectedVertex = temp->data;
+        if (graph->visited[connectedVertex] == 0)
+            DFS(graph, stack, connectedVertex);
+        temp = temp->next;
     }
 }
 
-void insert_edges(GPH *g, int edg_nr, int nrv)
+void insertEdges(Graph *graph, int edgeCount, int vertexCount)
 {
-    int src, dest, i;
-    printf("adauga %d munchii (de la 1 la %d)\n", edg_nr, nrv);
-    for (i = 0; i < edg_nr; i++)
+    int source, destination, i;
+    printf("adauga %d munchii (de la 1 la %d). In formatul a->b\n", edgeCount, vertexCount);
+    for (i = 0; i < edgeCount; i++)
     {
-        scanf("%d%d", &src, &dest);
-        add_edge(g, src, dest);
+        scanf("%d%d", &source, &destination);
+        addEdge(graph, source, destination);
     }
 }
 
-void wipe(GPH *g, int nrv)
+void resetVisited(Graph *graph, int vertexCount)
 {
-    for (int i = 0; i < nrv; i++)
+    for (int i = 0; i < vertexCount; i++)
     {
-        g->vis[i] = 0;
+        graph->visited[i] = 0;
     }
 } 
 
 
-    
-    void canbe(GPH *g, int nrv, STK *s1, STK *s2) // 0 sau 1 daca poate fi sau nu ajuns
+// rezultat de tip boolean- 0=false 1=true   
+void checkReachability(Graph *graph, int vertexCount, Stack *stack1, Stack *stack2) 
 {
-    int *canbe = calloc(5, sizeof(int));
-    for (int i = 0; i < nrv; i++) // aici i tine loc de numar adica de restaurant
+    //int *isReachable = (int *)calloc(5, sizeof(int));
+    int isReachable = 0;
+    //i reprezinta numarul restaurantului cum am stabilit mai sus
+    for (int i = 0; i < vertexCount; i++) 
      for (int j = 0; j < 5; j++)
     {
-        DFS(g, s1, i);
-        wipe(g, nrv);
-        DFS(g, s2, j);
-        int ans;
-        for (int j = 0; j < nrv && !ans; j++)
-            for (int i = 0; i < nrv && !ans; i++)
-                if ((s1->arr[i] == j) && (s2->arr[j] == i))
-                    canbe = 1;
+        DFS(graph, stack1, i);
+        resetVisited(graph, vertexCount);
+        DFS(graph, stack2, j);
+        int foundPath;
+        for (int j = 0; j < vertexCount && !foundPath; j++)
+            for (int i = 0; i < vertexCount && !foundPath; i++)
+                if ((stack1->array[i] == j) && (stack2->array[j] == i))
+                    isReachable = 1;
     }
 }
 
 int main()
 {
 
-    int nrv;
-    int edg_nr;
-    int src, dest;
+    int vertexCount;
+    int edgeCount;
+    int source, destination;
     int i;
     int vortex_1;
     int virtex_2;
-    int ans;
+    int foundPath;
 
-    printf("cate noduri are girafa?");
-    scanf("%d", &nrv);
+    printf("Cate Noduri are Graful?");
+    scanf("%d", &vertexCount);
 
-    printf("cate muchii are giraful?");
-    scanf("%d", &edg_nr);
+    printf("Cate Muchii are Graful?");
+    scanf("%d", &edgeCount);
 
-    GPH *g = create_g(&nrv);
+    Graph *graph = createGraph(vertexCount);
 
-        STK *s1 = create_s(2 * nrv);
-        int edg_nr;
-        insert_edges(g, &edg_nr, nrv);
-        STK *s2 = create_s(edg_nr);
+        Stack *stack1 = createStack(2 * vertexCount);
+        
+        insertEdges(graph, edgeCount, vertexCount);
+        Stack *stack2 = createStack(edgeCount);
       return 0;   
 }
